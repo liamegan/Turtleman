@@ -1,0 +1,20 @@
+{
+  "name": "turtleman",
+  "version": "1.0.0",
+  "description": "A brief description of your Turtleman package.",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"No tests specified\" && exit 0"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "CC0",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/liamegan/Turtleman.git"
+  },
+  "bugs": {
+    "url": "https://github.com/liamegan/Turtleman/issues"
+  },
+  "homepage": "https://github.com/liamegan/Turtleman#readme"
+}
