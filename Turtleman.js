@@ -1,4 +1,4 @@
-export class TurtleSVG {
+export class Turtleman {
   constructor({
     width = 500,
     height = 500,
@@ -129,6 +129,26 @@ export class TurtleSVG {
   setxy(x, y) {
     this.goto(x, y);
   }
+  moveby(x, y) {
+    if (
+      typeof x !== "number" ||
+      isNaN(x) ||
+      typeof y !== "number" ||
+      isNaN(y)
+    ) {
+      throw new Error("Coordinates must be valid numbers");
+    }
+    const newPos = { ...this.position };
+    newPos.x += x;
+    newPos.y += y;
+    if (this.penDown) {
+      this.drawLine(this.position, newPos);
+    }
+    this.position = newPos;
+  }
+  m(x, y) {
+    this.moveby(x, y);
+  }
   home() {
     const newPos = { ...this.home };
     if (this.penDown) {
@@ -221,6 +241,11 @@ export class TurtleSVG {
         case "goto":
         case "setxy":
           this.goto(args[0], args[1]);
+          break;
+
+        case "moveby":
+        case "m":
+          this.moveby(args[0], args[1]);
           break;
 
         case "home":

@@ -6,6 +6,16 @@
 
 ## Installation
 
+### NPM (Recommended)
+
+```bash
+npm install turtleman
+```
+
+### Manual Installation
+
+Download the `Turtleman.js` file and include it in your project.
+
 ---
 
 ## Usage
@@ -40,7 +50,9 @@ To use `Turtleman`, create an instance of the `Turtleman` class and append its S
     <div id="turtle-container"></div>
 
     <script type="module">
-      import { Turtleman } from "./Turtleman.js";
+      // If using npm: import { Turtleman } from "turtleman";
+      // If manual installation: import { Turtleman } from "./Turtleman.js";
+      import { Turtleman } from "turtleman";
 
       const container = document.getElementById("turtle-container");
       const turtle = new Turtleman({
@@ -71,7 +83,7 @@ To use `Turtleman`, create an instance of the `Turtleman` class and append its S
 
 ### Constructor
 
-- **`new TurtleSVG(options)`**: Creates a new `TurtleSVG` instance.
+- **`new Turtleman(options)`**: Creates a new `Turtleman` instance.
 
   - `options` (Object, optional):
     - `width` (number): Width of the SVG canvas.

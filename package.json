@@ -1,14 +1,27 @@
 {
   "name": "turtleman",
   "version": "1.0.0",
-  "description": "A brief description of your Turtleman package.",
-  "main": "index.js",
+  "description": "A JavaScript library for creating SVG graphics using turtle graphics programming, inspired by Logo. Control a virtual turtle to draw geometric shapes and designs programmatically.",
+  "main": "Turtleman.js",
+  "type": "module",
   "scripts": {
-    "test": "echo \"No tests specified\" && exit 0"
+    "test": "echo \"No tests specified\" && exit 0",
+    "prepublishOnly": "echo \"Preparing to publish...\""
   },
-  "keywords": [],
-  "author": "",
-  "license": "CC0",
+  "keywords": [
+    "turtle-graphics",
+    "svg",
+    "drawing",
+    "graphics",
+    "logo",
+    "geometric",
+    "canvas",
+    "visualization",
+    "educational",
+    "programming"
+  ],
+  "author": "Liam Egan",
+  "license": "MIT",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/liamegan/Turtleman.git"
@@ -16,5 +29,13 @@
   "bugs": {
     "url": "https://github.com/liamegan/Turtleman/issues"
   },
-  "homepage": "https://github.com/liamegan/Turtleman#readme"
+  "homepage": "https://github.com/liamegan/Turtleman#readme",
+  "files": [
+    "Turtleman.js",
+    "README.md",
+    "LICENSE"
+  ],
+  "engines": {
+    "node": ">=14.0.0"
+  }
 }

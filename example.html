@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Turtleman Example</title>
+    <style>
+      body {
+        font-family: Arial, sans-serif;
+        max-width: 800px;
+        margin: 0 auto;
+        padding: 20px;
+        background-color: #f5f5f5;
+      }
+      .container {
+        background: white;
+        padding: 20px;
+        border-radius: 8px;
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+      }
+      #turtle-container {
+        border: 2px solid #ddd;
+        border-radius: 4px;
+        margin: 20px 0;
+        background: white;
+      }
+      .controls {
+        margin: 20px 0;
+      }
+      button {
+        background: #007bff;
+        color: white;
+        border: none;
+        padding: 10px 20px;
+        margin: 5px;
+        border-radius: 4px;
+        cursor: pointer;
+      }
+      button:hover {
+        background: #0056b3;
+      }
+      pre {
+        background: #f8f9fa;
+        padding: 15px;
+        border-radius: 4px;
+        overflow-x: auto;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <h1>🐢 Turtleman Example</h1>
+      <p>
+        This example demonstrates the Turtleman library for creating SVG
+        graphics using turtle graphics programming.
+      </p>
+
+      <div class="controls">
+        <button onclick="drawSquare()">Draw Square</button>
+        <button onclick="drawCircle()">Draw Circle</button>
+        <button onclick="drawSpiral()">Draw Spiral</button>
+        <button onclick="clearCanvas()">Clear</button>
+      </div>
+
+      <div id="turtle-container"></div>
+
+      <h3>Code Example:</h3>
+      <pre><code>// Create a new turtle instance
+const turtle = new TurtleSVG({
+    width: 600,
+    height: 400,
+    strokeColour: "blue",
+    strokeWidth: 2
+});
+
+// Draw a square
+for (let i = 0; i < 4; i++) {
+    turtle.forward(100);
+    turtle.right(90);
+}</code></pre>
+    </div>
+
+    <script type="module">
+      import { TurtleSVG } from "./Turtleman.js";
+
+      const container = document.getElementById("turtle-container");
+      const turtle = new TurtleSVG({
+        width: 600,
+        height: 400,
+        startPosition: { x: 300, y: 200 },
+        strokeColour: "blue",
+        strokeWidth: 2,
+      });
+
+      container.appendChild(turtle.svg);
+
+      // Make functions globally available for buttons
+      window.drawSquare = function () {
+        turtle.reset();
+        for (let i = 0; i < 4; i++) {
+          turtle.forward(100);
+          turtle.right(90);
+        }
+      };
+
+      window.drawCircle = function () {
+        turtle.reset();
+        turtle.penup();
+        turtle.goto(300, 150);
+        turtle.pendown();
+
+        for (let i = 0; i < 360; i++) {
+          turtle.forward(1);
+          turtle.right(1);
+        }
+      };
+
+      window.drawSpiral = function () {
+        turtle.reset();
+        turtle.penup();
+        turtle.goto(300, 200);
+        turtle.pendown();
+
+        for (let i = 0; i < 100; i++) {
+          turtle.forward(i * 2);
+          turtle.right(90);
+        }
+      };
+
+      window.clearCanvas = function () {
+        turtle.reset();
+      };
+
+      // Draw initial square
+      drawSquare();
+    </script>
+  </body>
+</html>
