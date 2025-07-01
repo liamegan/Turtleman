@@ -26,16 +26,18 @@ export class TurtleSVG {
     });
   }
 
-  reset({
-    width = 500,
-    height = 500,
-    startPosition = { x: 250, y: 250 },
-    heading = 0,
-    penDown = true,
-    strokeColour = "black",
-    strokeWidth = 2,
-    angleType = "degrees",
-  } = {}) {
+  reset(
+    {
+      width,
+      height,
+      startPosition,
+      heading,
+      penDown,
+      strokeColour,
+      strokeWidth,
+      angleType,
+    } = this.initializedProps
+  ) {
     this.width = width;
     this.height = height;
     this.position = startPosition;
