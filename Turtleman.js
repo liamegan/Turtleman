@@ -2,17 +2,31 @@ export class Turtleman {
   constructor({
     width = 500,
     height = 500,
-    startPosition = { x: 250, y: 250 },
+    startPosition = { x: width / 2, y: height / 2 },
     heading = 0,
     penDown = true,
     strokeColour = "black",
     strokeWidth = 2,
     angleType = "degrees",
+    filename = "turtleman_drawing",
+    precision = 2,
+    mode = "contiguous", // 'contiguous' or 'discrete'
   } = {}) {
+    // Create a wrapper div to contain the SVG
+    this.wrapperDiv = document.createElement("div");
+    this.wrapperDiv.classList.add("turtleman-container");
+
     this.svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
     this.svg.setAttribute("width", width);
     this.svg.setAttribute("height", height);
     this.svg.setAttribute("viewBox", `0 0 ${width} ${height}`);
+    this.wrapperDiv.appendChild(this.svg);
+
+    // Create the download link
+    this.downloadLink = document.createElement("a");
+    this.downloadLink.textContent = "Download SVG";
+    this.downloadLink.href = "#";
+    this.wrapperDiv.appendChild(this.downloadLink);
 
     this.reset({
       width,
@@ -23,7 +37,13 @@ export class Turtleman {
       strokeColour,
       strokeWidth,
       angleType,
+      precision,
+      mode,
     });
+
+    this.filename = filename;
+
+    this.addDownloadListeners();
   }
 
   reset(
@@ -36,6 +56,8 @@ export class Turtleman {
       strokeColour,
       strokeWidth,
       angleType,
+      precision,
+      mode,
     } = this.initializedProps
   ) {
     this.width = width;
@@ -47,6 +69,9 @@ export class Turtleman {
     this.strokeColour = strokeColour;
     this.strokeWidth = strokeWidth;
     this.angleType = angleType;
+    this.precision = precision;
+    this.mode = mode;
+    this.lineIndex = 0;
 
     this.initializedProps = {
       width,
@@ -57,26 +82,118 @@ export class Turtleman {
       strokeColour,
       strokeWidth,
       angleType,
+      precision,
+      mode,
     };
 
+    // Update dimensions on both SVG and wrapper for consistency
     this.svg.setAttribute("width", width);
     this.svg.setAttribute("height", height);
     this.svg.setAttribute("viewBox", `0 0 ${width} ${height}`);
 
+    // Clear the drawing commands array instead of SVG directly
+    this.drawingCommands = [];
+    this.currentPathCommands = [];
+    this.needsRender = true;
+
+    // Clear the SVG
     while (this.svg.firstChild) {
       this.svg.removeChild(this.svg.firstChild);
     }
   }
 
+  round(n) {
+    const factor = this.precision * 10;
+    return Math.floor(n * factor) / factor;
+  }
+
+  // Add a drawing command to the array
+  addDrawingCommand(command) {
+    this.drawingCommands.push(command);
+    this.needsRender = true;
+  }
+
+  // Render all drawing commands to SVG
+  render() {
+    if (!this.needsRender) return;
+
+    // Clear the SVG
+    while (this.svg.firstChild) {
+      this.svg.removeChild(this.svg.firstChild);
+    }
+
+    if (this.mode === "discrete") {
+      this.renderDiscreteMode();
+    } else {
+      this.renderContiguousMode();
+    }
+
+    this.needsRender = false;
+  }
+
+  renderDiscreteMode() {
+    this.drawingCommands.forEach((command) => {
+      if (command.type === "line") {
+        const line = document.createElementNS(
+          "http://www.w3.org/2000/svg",
+          "line"
+        );
+        line.setAttribute("x1", this.round(command.from.x));
+        line.setAttribute("y1", this.round(command.from.y));
+        line.setAttribute("x2", this.round(command.to.x));
+        line.setAttribute("y2", this.round(command.to.y));
+        line.setAttribute("stroke", command.strokeColour);
+        line.setAttribute("stroke-width", command.strokeWidth);
+        this.svg.appendChild(line);
+      }
+    });
+  }
+
+  renderContiguousMode() {
+    const lineGroups = this.lineGroups;
+
+    // Create paths for each group
+    lineGroups.forEach((group) => {
+      if (group.points.length === 0) return;
+
+      const path = document.createElementNS(
+        "http://www.w3.org/2000/svg",
+        "path"
+      );
+      path.setAttribute("fill", "none");
+      path.setAttribute("stroke", group.strokeColour);
+      path.setAttribute("stroke-width", group.strokeWidth);
+
+      let pathData = "";
+      let isFirst = true;
+
+      group.points.forEach((point) => {
+        if (isFirst) {
+          pathData = `M${this.round(point.x)},${this.round(point.y)}`;
+          isFirst = false;
+        } else {
+          pathData += ` L${this.round(point.x)},${this.round(point.y)}`;
+        }
+      });
+
+      path.setAttribute("d", pathData);
+      this.svg.appendChild(path);
+    });
+  }
+
+  update() {
+    this.render();
+  }
+
   drawLine(a, b) {
-    const line = document.createElementNS("http://www.w3.org/2000/svg", "line");
-    line.setAttribute("x1", a.x);
-    line.setAttribute("y1", a.y);
-    line.setAttribute("x2", b.x);
-    line.setAttribute("y2", b.y);
-    line.setAttribute("stroke", this.strokeColour);
-    line.setAttribute("stroke-width", this.strokeWidth);
-    this.svg.appendChild(line);
+    this.addDrawingCommand({
+      type: "line",
+      from: { x: a.x, y: a.y },
+      to: { x: b.x, y: b.y },
+      strokeColour: this.strokeColour,
+      strokeWidth: this.strokeWidth,
+      i: this.lineIndex,
+    });
   }
 
   forward(distance) {
@@ -146,9 +263,6 @@ export class Turtleman {
     }
     this.position = newPos;
   }
-  m(x, y) {
-    this.moveby(x, y);
-  }
   home() {
     const newPos = { ...this.home };
     if (this.penDown) {
@@ -190,7 +304,12 @@ export class Turtleman {
     if (typeof isDown !== "boolean") {
       throw new Error("Pen state must be a boolean");
     }
-    this.penDown = isDown;
+    if (isDown) {
+      this.penDown = true;
+    } else {
+      this.penDown = false;
+      this.lineIndex++;
+    }
   }
   pu() {
     this.setPenDown(false);
@@ -204,7 +323,7 @@ export class Turtleman {
   pendown() {
     this.setPenDown(true);
   }
-  jumpTo(x, y) {
+  jumpto(x, y) {
     if (
       typeof x !== "number" ||
       isNaN(x) ||
@@ -213,18 +332,16 @@ export class Turtleman {
     ) {
       throw new Error("Coordinates must be valid numbers");
     }
-    this.position = { x, y };
+    this.position = { x: this.round(x), y: this.round(y) };
   }
   jump(x, y) {
-    this.jumpTo(x, y);
+    this.jumpto(x, y);
   }
 
   processCommand(commandLine) {
     const parts = commandLine.toLowerCase().trim().split(/\s+/);
     const command = parts[0];
     const args = parts.slice(1).map(Number);
-
-    console.log(parts, args);
 
     try {
       switch (command) {
@@ -243,19 +360,14 @@ export class Turtleman {
           this.goto(args[0], args[1]);
           break;
 
-        case "moveby":
-        case "m":
-          this.moveby(args[0], args[1]);
-          break;
-
         case "home":
         case "hm":
           this.home();
           break;
 
         case "jump":
-        case "jumpTo":
-          this.jumpTo(args[0], args[1]);
+        case "jumpto":
+          this.jumpto(args[0], args[1]);
           break;
 
         case "setheading":
@@ -302,7 +414,7 @@ export class Turtleman {
       }
     } catch (error) {
       console.warn(
-        `Error processing forward command: ${error.message}, skipping.`
+        `Error processing command "${commandLine}": ${error.message}, skipping.`
       );
     }
   }
@@ -341,5 +453,108 @@ export class Turtleman {
       return this.heading;
     }
     return (this.heading * Math.PI) / 180;
+  }
+
+  downloadSVG() {
+    try {
+      // Ensure the SVG is rendered before downloading
+      this.render();
+
+      const svgContent = this.svg.outerHTML;
+      const blob = new Blob([svgContent], { type: "image/svg+xml" });
+      const url = URL.createObjectURL(blob);
+
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `${this.filename}.svg`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+
+      console.log(`SVG downloaded as ${this.filename}.svg`);
+    } catch (error) {
+      console.error("Error downloading SVG:", error);
+      alert("Could not download SVG. Check console for details.");
+    }
+  }
+
+  addDownloadListeners() {
+    this.wrapperDiv.addEventListener("mouseenter", () => {
+      this.downloadLink.style.display = "block";
+    });
+
+    this.wrapperDiv.addEventListener("mouseleave", () => {
+      this.downloadLink.style.display = "none";
+    });
+
+    this.downloadLink.addEventListener("click", (e) => {
+      e.preventDefault();
+      this.downloadSVG();
+    });
+  }
+
+  get commands() {
+    return [...this.drawingCommands];
+  }
+
+  clearDrawing() {
+    this.drawingCommands = [];
+    this.needsRender = true;
+    this.render();
+  }
+
+  get element() {
+    return this.wrapperDiv;
+  }
+
+  get lineGroups() {
+    const pathGroups = new Map();
+
+    this.drawingCommands.forEach((command) => {
+      if (command.type === "line") {
+        const key = `${command.strokeColour}-${command.strokeWidth}-${command.i}`;
+        if (!pathGroups.has(key)) {
+          pathGroups.set(key, {
+            strokeColour: command.strokeColour,
+            strokeWidth: command.strokeWidth,
+            index: command.i,
+            points: [],
+          });
+        }
+        const group = pathGroups.get(key);
+        if (group.points.length === 0) {
+          group.points.push({ x: command.from.x, y: command.from.y });
+        }
+        group.points.push({ x: command.to.x, y: command.to.y });
+      }
+    });
+
+    return Array.from(pathGroups.values());
+  }
+
+  addLineGroup(lineGroup) {
+    if (!lineGroup.points || lineGroup.points.length < 2) {
+      console.warn("LineGroup must have at least 2 points");
+      return;
+    }
+
+    lineGroup.index = ++this.lineIndex;
+    lineGroup.strokeColour = lineGroup.strokeColour || this.strokeColour;
+    lineGroup.strokeWidth = lineGroup.strokeWidth || this.strokeWidth;
+
+    for (let i = 0; i < lineGroup.points.length - 1; i++) {
+      const from = lineGroup.points[i];
+      const to = lineGroup.points[i + 1];
+
+      this.addDrawingCommand({
+        type: "line",
+        from: { x: from.x, y: from.y },
+        to: { x: to.x, y: to.y },
+        strokeColour: lineGroup.strokeColour,
+        strokeWidth: lineGroup.strokeWidth,
+        i: lineGroup.index || this.lineIndex,
+      });
+    }
   }
 }
