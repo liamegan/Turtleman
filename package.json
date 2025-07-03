@@ -1,6 +1,6 @@
 {
   "name": "turtleman",
-  "version": "1.0.2",
+  "version": "1.0.3",
   "description": "A JavaScript library for creating SVG graphics using turtle graphics programming, inspired by Logo. Control a virtual turtle to draw geometric shapes and designs programmatically.",
   "main": "Turtleman.js",
   "type": "module",
