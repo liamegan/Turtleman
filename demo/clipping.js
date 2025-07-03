@@ -38,7 +38,7 @@ const b = groups[1].points.map((p) => {
 
 const subject = new Shape([a], true);
 const clip = new Shape([b], true);
-const result = subject.xor(clip);
+const result = subject.union(clip);
 
 result.paths.forEach((path) => {
   const g = {
