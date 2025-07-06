@@ -1,15 +1,14 @@
-import Shape from "https://esm.sh/clipper-js";
+import { Polygons } from "../utilities/Polygons.js";
 import { Turtleman } from "../Turtleman.js";
-
-/**
- * Clipping uses the clipper library
- * https://github.com/Doodle3D/clipper-js
- */
 
 const toy = new Turtleman();
 container.appendChild(toy.element);
 
+const polygons = new Polygons();
+
 const squareCommands = `
+  forward 100
+  right 90
   forward 100
   right 90
   forward 100
@@ -25,44 +24,39 @@ const squareCommands = `
   forward 100
   right 90
   forward 100
+  right 90
+  forward 100
+  penup
+  forward 50
+  right 90
+  forward 50
+  pendown
+  forward 100
+  right 90
+  forward 100
+  right 90
+  forward 100
+  right 90
+  forward 100
 `;
 toy.drawCommands(squareCommands);
 
 const groups = toy.lineGroups;
-const a = groups[0].points.map((p) => {
-  return { X: p.x, Y: p.y };
-});
-const b = groups[1].points.map((p) => {
-  return { X: p.x, Y: p.y };
-});
+console.log(groups);
 
-const subject = new Shape([a], true);
-const clip = new Shape([b], true);
-const result = subject.union(clip);
+toy.reset();
 
-result.paths.forEach((path) => {
-  const g = {
-    points: path.map((p) => {
-      return { x: p.X - 160, y: p.Y - 160 };
-    }),
-  };
-  if (result.closed) {
-    g.points.push(g.points[0]);
-  }
-  toy.addLineGroup(g);
-});
+for (let i = 0; i < groups.length; i++) {
+  console.log(groups[i]);
 
-// console.log(subject, Shape.difference(subject, clip));
+  const p1 = polygons.create(),
+    p2 = polygons.create();
 
-// toy.lineGroups.forEach((group) => {
-//   console.log(group);
+  p1.addPoints(...groups[i].points.map((p) => [p.x, p.y]));
 
-//   group.points.forEach((point) => {
-//     point.x -= 160;
-//     point.y -= 160;
-//   });
+  p1.addOutline();
 
-//   toy.addLineGroup(group);
-// });
+  polygons.draw(toy, p1);
+}
 
 toy.render();

@@ -1,6 +1,6 @@
 import { Turtleman } from "../Turtleman.js";
 
-const toy = new Turtleman();
+const toy = new Turtleman({ width: 1000, height: 800, strokeWidth: 1 });
 container.appendChild(toy.element);
 
 function smoothstep(min, max, value) {
@@ -10,7 +10,7 @@ function smoothstep(min, max, value) {
 
 // Modified archimedian spiral, makes both step size and coil separation variable
 // toy.reset();
-const tightness = 0.6; // Adjust this value to control coil spacing
+const tightness = 1; // Adjust this value to control coil spacing
 // 0.1 means coils are 2*PI*0.1 = 0.628 units apart per turn.
 // 1.0 means coils are 2*PI*1.0 = 6.28 units apart per turn.
 let step_size = 3; // The target linear distance between points
@@ -21,7 +21,7 @@ toy.goto(
   Math.sin(theta) * radius + toy.height / 2
 );
 let i = 0;
-while (radius < 500) {
+while (radius < 1000) {
   // Using radius as the exit condition
   if (i > 150000) break; // Increased failsafe for potentially more iterations
   i++;
@@ -46,4 +46,15 @@ while (radius < 500) {
 
   toy.goto(x, y);
 }
+
+toy.jump(1, 1);
+toy.setheading(0);
+toy.forward(toy.width - 2);
+toy.right(90);
+toy.forward(toy.height - 2);
+toy.right(90);
+toy.forward(toy.width - 2);
+toy.right(90);
+toy.forward(toy.height - 2);
+
 toy.render();

@@ -1,3 +1,128 @@
+"use strict";
+
+const EPSILON = 0.0001;
+
+const inside_rect = (a, minX, maxX, minY, maxY) => {
+  return a.x >= minX && a.x <= maxX && a.y >= minY && a.y <= maxY;
+};
+
+const find_segment_intersect = (l1p1, l1p2, l2p1, l2p2) => {
+  const d =
+    (l2p2.y - l2p1.y) * (l1p2.x - l1p1.x) -
+    (l2p2.x - l2p1.x) * (l1p2.y - l1p1.y);
+  const n_a =
+    (l2p2.x - l2p1.x) * (l1p1.y - l2p1.y) -
+    (l2p2.y - l2p1.y) * (l1p1.x - l2p1.x);
+  const n_b =
+    (l1p2.x - l1p1.x) * (l1p1.y - l2p1.y) -
+    (l1p2.y - l1p1.y) * (l1p1.x - l2p1.x);
+  if (d === 0) {
+    return false;
+  }
+  const ua = n_a / d;
+  const ub = n_b / d;
+  if (ua >= 0 && ua <= 1 && ub >= 0 && ub <= 1) {
+    return {
+      x: l1p1.x + ua * (l1p2.x - l1p1.x),
+      y: l1p1.y + ua * (l1p2.y - l1p1.y),
+    };
+  }
+  return false;
+};
+
+function clipPathsRect(paths, minX, maxX, minY, maxY) {
+  let clippedPaths = [];
+  let rectCorners = [
+    { x: minX, y: minY },
+    { x: maxX, y: minY },
+    { x: maxX, y: maxY },
+    { x: minX, y: maxY },
+    { x: minX, y: minY },
+  ];
+
+  for (let path of paths) {
+    if (!path || path.length === 0) continue;
+
+    let currentClippedPath = [];
+    let prevInside = false;
+
+    for (let i = 0; i < path.length - 1; i++) {
+      let pointA = path[i];
+      let pointB = path[i + 1];
+      let insideA = inside_rect(pointA, minX, maxX, minY, maxY);
+      let insideB = inside_rect(pointB, minX, maxX, minY, maxY);
+
+      if (insideA) {
+        if (!prevInside || i === 0) {
+          if (currentClippedPath.length > 0) {
+            clippedPaths.push(currentClippedPath);
+          }
+          currentClippedPath = [];
+          currentClippedPath.push(pointA);
+        }
+        if (insideB) {
+          currentClippedPath.push(pointB);
+          prevInside = true;
+          continue;
+        }
+      }
+
+      // At least one point is outside, or a segment crosses the boundary.
+      let segmentIntersectsBoundary = false;
+      let intersectionPoint = null;
+
+      for (let j = 0; j < rectCorners.length - 1; j++) {
+        let cornerA = rectCorners[j];
+        let cornerB = rectCorners[j + 1];
+        let intersection = find_segment_intersect(
+          pointA,
+          pointB,
+          cornerA,
+          cornerB
+        );
+
+        if (intersection) {
+          segmentIntersectsBoundary = true;
+          intersectionPoint = intersection;
+
+          if (
+            currentClippedPath.length === 0 ||
+            !(
+              Math.abs(
+                currentClippedPath[currentClippedPath.length - 1].x -
+                  intersection.x
+              ) < EPSILON &&
+              Math.abs(
+                currentClippedPath[currentClippedPath.length - 1].y -
+                  intersection.y
+              ) < EPSILON
+            )
+          ) {
+            currentClippedPath.push(intersectionPoint);
+          }
+        }
+      }
+
+      if (!insideA && insideB) {
+        currentClippedPath.push(pointB);
+      } else if (!segmentIntersectsBoundary && !insideA && !insideB) {
+        if (currentClippedPath.length > 0) {
+          clippedPaths.push(currentClippedPath);
+        }
+        currentClippedPath = [];
+      }
+
+      prevInside = insideB;
+    }
+
+    if (currentClippedPath.length > 0) {
+      clippedPaths.push(currentClippedPath);
+    }
+  }
+
+  return clippedPaths.filter((p) => p.length > 1);
+}
+
 /**
  * Turtleman - A JavaScript library for creating SVG graphics using turtle graphics programming
  *
@@ -51,6 +176,7 @@ export class Turtleman {
     filename = "turtleman_drawing",
     precision = 2,
     mode = "contiguous", // 'contiguous' or 'discrete'
+    crop = true,
   } = {}) {
     // Create a wrapper div to contain the SVG
     this.wrapperDiv = document.createElement("div");
@@ -79,6 +205,7 @@ export class Turtleman {
       angleType,
       precision,
       mode,
+      crop,
     });
 
     this.filename = filename;
@@ -226,6 +353,7 @@ export class Turtleman {
       angleType,
       precision,
       mode,
+      crop,
     } = this.initializedProps
   ) {
     this.width = width;
@@ -240,6 +368,7 @@ export class Turtleman {
     this.precision = precision;
     this.mode = mode;
     this.lineIndex = 0;
+    this.crop = crop;
 
     this.initializedProps = {
       width,
@@ -252,6 +381,7 @@ export class Turtleman {
       angleType,
       precision,
       mode,
+      crop,
     };
 
     // Update dimensions on both SVG and wrapper for consistency
@@ -432,6 +562,10 @@ export class Turtleman {
       this.drawLine(this.position, newPos);
     }
     this.position = newPos;
+  }
+
+  mb(x, y) {
+    this.moveby(x, y);
   }
 
   /**
@@ -700,7 +834,7 @@ export class Turtleman {
   /**
    * Renders all drawing commands to SVG
    */
-  render() {
+  render(onlyNew = false) {
     if (!this.needsRender) return;
 
     // Clear the SVG
@@ -709,9 +843,9 @@ export class Turtleman {
     }
 
     if (this.mode === "discrete") {
-      this.renderDiscreteMode();
+      this.renderDiscreteMode(onlyNew);
     } else {
-      this.renderContiguousMode();
+      this.renderContiguousMode(onlyNew);
     }
 
     this.needsRender = false;
@@ -721,7 +855,7 @@ export class Turtleman {
    * Renders in discrete mode (each line as separate SVG element)
    * @private
    */
-  renderDiscreteMode() {
+  renderDiscreteMode(onlyNew = false) {
     this.drawingCommands.forEach((command) => {
       if (command.type === "line") {
         const line = document.createElementNS(
@@ -743,11 +877,36 @@ export class Turtleman {
    * Renders in contiguous mode (connected lines as SVG paths)
    * @private
    */
-  renderContiguousMode() {
+  renderContiguousMode(onlyNew = false) {
     const lineGroups = this.lineGroups;
+    const croppedLineGroups = [];
 
-    // Create paths for each group
-    lineGroups.forEach((group) => {
+    if (this.crop) {
+      let i = 0;
+      lineGroups.forEach((group) => {
+        if (onlyNew && group.rendered) return;
+        group.rendered = true;
+        const newGroups = clipPathsRect(
+          [group.points],
+          0,
+          this.width,
+          0,
+          this.height
+        );
+        newGroups.forEach((newGroup) => {
+          croppedLineGroups.push({
+            points: newGroup,
+            strokeColour: group.strokeColour,
+            strokeWidth: group.strokeWidth,
+            index: i++,
+          });
+        });
+      });
+    } else {
+      croppedLineGroups = lineGroups;
+    }
+
+    croppedLineGroups.forEach((group) => {
       if (group.points.length === 0) return;
 
       const path = document.createElementNS(
