@@ -879,7 +879,7 @@ export class Turtleman {
    */
   renderContiguousMode(onlyNew = false) {
     const lineGroups = this.lineGroups;
-    const croppedLineGroups = [];
+    let croppedLineGroups = [];
 
     if (this.crop) {
       let i = 0;
