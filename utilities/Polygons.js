@@ -1,3 +1,6 @@
+/*
+ * Polygon Clipping utility code - Created by Reinder Nijhoff 2019
+ */
 export function Polygons() {
   const polygonList = [];
   const Polygon = class {
@@ -38,18 +41,30 @@ export function Polygons() {
       }
     }
     addHatching(a, d) {
+      a += Math.PI / 2;
       const tp = new Polygon();
-      tp.cp.push([-1e5, -1e5], [1e5, -1e5], [1e5, 1e5], [-1e5, 1e5]);
-      const dx = Math.sin(a) * d,
-        dy = Math.cos(a) * d;
-      const cx = Math.sin(a) * 200,
-        cy = Math.cos(a) * 200;
-      for (let i = 0.5; i < 150 / d; i++) {
-        tp.dp.push([dx * i + cy, dy * i - cx], [dx * i - cy, dy * i + cx]);
-        tp.dp.push([-dx * i + cy, -dy * i - cx], [-dx * i - cy, -dy * i + cx]);
+      const x = this.aabb[0],
+        y = this.aabb[1];
+      const w = this.aabb[2],
+        h = this.aabb[3];
+      const l = Math.sqrt((w * 2) ** 2 + (h * 2) ** 2) * 0.5;
+      tp.cp.push(
+        [x - w, y - h],
+        [x + w, y - h],
+        [x + w, y + h],
+        [x - w, y + h]
+      );
+      const cx = Math.sin(a) * l,
+        cy = Math.cos(a) * l;
+      let px = x - Math.cos(a) * l;
+      let py = y - Math.sin(a) * l;
+      for (let i = 0; i < l * 2; i += d) {
+        tp.dp.push([px + cx, py - cy], [px - cx, py + cy]);
+        px += Math.cos(a) * d;
+        py += Math.sin(a) * d;
       }
       tp.boolean(this, false);
-      this.dp = [...this.dp, ...tp.dp];
+      for (const dp of tp.dp) this.dp.push(dp);
     }
     inside(p) {
       let int = 0; // find number of i ntersection points from p to far away

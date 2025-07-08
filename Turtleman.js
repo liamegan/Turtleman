@@ -294,6 +294,14 @@ export class Turtleman {
   }
 
   /**
+   * Gets whether coordinate capture mode is currently active
+   * @returns {boolean} True if capture mode is active
+   */
+  get capturing() {
+    return this.isCapturing;
+  }
+
+  /**
    * Gets groups of connected lines for contiguous rendering mode
    * @returns {Array} Array of line groups
    */
@@ -370,6 +378,9 @@ export class Turtleman {
     this.lineIndex = 0;
     this.crop = crop;
 
+    this.isCapturing = false;
+    this.capturedPoints = [];
+
     this.initializedProps = {
       width,
       height,
@@ -434,6 +445,27 @@ export class Turtleman {
     this.needsRender = true;
   }
 
+  /**
+   * Starts capturing coordinates instead of drawing
+   * When capture mode is active, movement commands will collect points
+   * in a temporary array instead of adding them to the drawing commands.
+   */
+  startCapture() {
+    this.isCapturing = true;
+    this.capturedPoints = [];
+  }
+
+  /**
+   * Ends coordinate capture and returns the collected points
+   * @returns {Array} Array of captured coordinate objects {x, y}
+   */
+  endCapture() {
+    this.isCapturing = false;
+    const points = [...this.capturedPoints];
+    this.capturedPoints = [];
+    return points;
+  }
+
   // ============================================================================
   // DRAWING METHODS
   // ============================================================================
@@ -445,14 +477,22 @@ export class Turtleman {
    * @private
    */
   drawLine(a, b) {
-    this.addDrawingCommand({
-      type: "line",
-      from: { x: a.x, y: a.y },
-      to: { x: b.x, y: b.y },
-      strokeColour: this.strokeColour,
-      strokeWidth: this.strokeWidth,
-      i: this.lineIndex,
-    });
+    if (this.isCapturing) {
+      // Add points to captured array instead of drawing
+      if (this.capturedPoints.length === 0) {
+        this.capturedPoints.push({ x: a.x, y: a.y });
+      }
+      this.capturedPoints.push({ x: b.x, y: b.y });
+    } else {
+      this.addDrawingCommand({
+        type: "line",
+        from: { x: a.x, y: a.y },
+        to: { x: b.x, y: b.y },
+        strokeColour: this.strokeColour,
+        strokeWidth: this.strokeWidth,
+        i: this.lineIndex,
+      });
+    }
   }
 
   /**

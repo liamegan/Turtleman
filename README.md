@@ -204,6 +204,57 @@ This approach is ideal for:
 - Batch operations
 - When you have coordinate data from external sources
 
+### 4. Coordinate Capture with `startCapture()` and `endCapture()`
+
+For scenarios where you want to collect coordinates without drawing them, use the coordinate capture feature:
+
+```javascript
+const turtle = new Turtleman();
+
+// Start capturing coordinates
+turtle.startCapture();
+
+// Move the turtle around to collect points
+turtle.forward(100);
+turtle.right(90);
+turtle.forward(100);
+turtle.right(90);
+turtle.forward(100);
+turtle.right(90);
+turtle.forward(100);
+
+// End capture and get the collected points
+const capturedPoints = turtle.endCapture();
+console.log(capturedPoints);
+// Output: [
+//   { x: 300, y: 200 },
+//   { x: 400, y: 200 },
+//   { x: 400, y: 300 },
+//   { x: 300, y: 300 },
+//   { x: 300, y: 200 }
+// ]
+
+// Now you can process the points or draw them differently
+// For example, create a line group from the captured points
+turtle.addLineGroup({
+  points: capturedPoints,
+  strokeColour: "purple",
+  strokeWidth: 4,
+});
+```
+
+This approach is ideal for:
+
+- Collecting coordinates for analysis
+- Creating shapes from captured paths
+- Processing coordinates before rendering
+- Building complex shapes from simple movements
+
+- Adding pre-computed shapes
+- Importing drawings from other systems
+- Batch operations
+- When you have coordinate data from external sources
+
 ## API Reference
 
 ### Constructor
@@ -258,6 +309,11 @@ This approach is ideal for:
 - **`addLineGroup(lineGroup)`**: Adds a group of connected lines with shared properties.
 - **`drawLine(point1, point2)`**: Internal method to draw a line between two points.
 
+#### Coordinate Capture
+
+- **`startCapture()`**: Starts capturing coordinates instead of drawing. When active, movement commands collect points in a temporary array.
+- **`endCapture()`**: Ends coordinate capture and returns the collected points as an array of `{ x, y }` objects.
+
 #### Download & Export
 
 - **`downloadSVG()`**: Downloads the current drawing as an SVG file.
@@ -288,6 +344,7 @@ This approach is ideal for:
 - **`mode`** (string): "contiguous" or "discrete" rendering mode.
 - **`filename`** (string): Default filename for SVG downloads.
 - **`commands`** (Array): Array of all drawing commands (read-only).
+- **`capturing`** (boolean): Whether coordinate capture mode is currently active (read-only).
 
 #### Internal Properties
 
