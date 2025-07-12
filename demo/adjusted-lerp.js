@@ -6,9 +6,11 @@ import { Turtleman } from "../Turtleman.js";
 const CONFIG = {
   width: 800, // Canvas width
   height: 800, // Canvas height
-  splits: 10,
-  notchSize: 0.5,
+  boxSize: 600,
+  splits: 10, // The number of splits
+  notchSize: 0.5, // The size of the notch - relative to the space it can concievably take up
 };
+// notchSize can be thought of as the radio of the size of the quad to the space around it.
 // --- PANE ---
 const pane = new Pane();
 pane.addBinding(CONFIG, "width");
@@ -53,11 +55,12 @@ const rebuild = () => {
   });
   document.getElementById("container").appendChild(toy.element);
 
+  const s = CONFIG.boxSize / 2;
   const points = [
-    [-100, -100],
-    [100, -100],
-    [100, 100],
-    [-100, 100],
+    [-s, -s],
+    [s, -s],
+    [s, s],
+    [-s, s],
   ];
 
   // Lerp between the top-left and top-right points
@@ -81,6 +84,7 @@ const rebuild = () => {
     );
     x += notchSizeinPx + spaceW;
     p.outline();
+    p.addHatching(Math.PI / 4, 3);
     polygons.draw(toy, p);
   }
 
