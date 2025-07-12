@@ -177,6 +177,7 @@ export class Turtleman {
     precision = 2,
     mode = "contiguous", // 'contiguous' or 'discrete'
     crop = true,
+    offset = { x: 0, y: 0 },
   } = {}) {
     // Create a wrapper div to contain the SVG
     this.wrapperDiv = document.createElement("div");
@@ -206,6 +207,7 @@ export class Turtleman {
       precision,
       mode,
       crop,
+      offset,
     });
 
     this.filename = filename;
@@ -362,6 +364,7 @@ export class Turtleman {
       precision,
       mode,
       crop,
+      offset,
     } = this.initializedProps
   ) {
     this.width = width;
@@ -377,7 +380,7 @@ export class Turtleman {
     this.mode = mode;
     this.lineIndex = 0;
     this.crop = crop;
-
+    this.offset = offset;
     this.isCapturing = false;
     this.capturedPoints = [];
 
@@ -393,6 +396,7 @@ export class Turtleman {
       precision,
       mode,
       crop,
+      offset,
     };
 
     // Update dimensions on both SVG and wrapper for consistency
@@ -466,6 +470,15 @@ export class Turtleman {
     return points;
   }
 
+  /**
+   * Sets the offset of the toy
+   * @param {number} x - X offset
+   * @param {number} y - Y offset
+   */
+  setOffset(x, y) {
+    this.offset = { x, y };
+  }
+
   // ============================================================================
   // DRAWING METHODS
   // ============================================================================
@@ -486,8 +499,8 @@ export class Turtleman {
     } else {
       this.addDrawingCommand({
         type: "line",
-        from: { x: a.x, y: a.y },
-        to: { x: b.x, y: b.y },
+        from: { x: a.x + this.offset.x, y: a.y + this.offset.y },
+        to: { x: b.x + this.offset.x, y: b.y + this.offset.y },
         strokeColour: this.strokeColour,
         strokeWidth: this.strokeWidth,
         i: this.lineIndex,
