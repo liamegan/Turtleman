@@ -30,7 +30,7 @@ export function Polygons() {
       // add segments (each a pair of points)
       points.forEach((p) => this.dp.push(p));
     }
-    addOutline() {
+    outline() {
       for (let i = 0, l = this.cp.length; i < l; i++) {
         this.dp.push(this.cp[i], this.cp[(i + 1) % l]);
       }
