@@ -67,22 +67,23 @@ const rebuild = () => {
   // Based on the splits. And draw a quad from top to bottom
   // The width of which is the notchSize. The left edge of the quad should be the left side of the square
   const l = points[1][0] - points[0][0]; // The length of the top edge
-  const spaces = splits > 1 ? splits - 1 : 0;
-  const spaceW = splits > 1 ? (1 / (splits * notchSize + spaces)) * l : 0;
-  const notchSizeinPx = splits === 1 ? l : spaceW * notchSize;
-  let x = points[0][0];
+  const spaces = splits > 1 ? splits + 1 : 0;
+  const spaceW = splits > 1 ? 1 / (splits * notchSize + spaces) : 0;
+  const notchLength = splits === 1 ? 1 : spaceW * notchSize;
+  let x = spaceW;
 
-  console.log(splits, spaces, spaceW, notchSizeinPx);
+  // console.log(splits, spaces, spaceW, notchSizeinPx);
 
   for (let i = 0; i < splits; i++) {
     const p = polygons.create();
-    p.addPoints(
-      [x, points[0][1]],
-      [x + notchSizeinPx, points[0][1]],
-      [x + notchSizeinPx, points[3][1]],
-      [x, points[3][1]]
-    );
-    x += notchSizeinPx + spaceW;
+
+    const a = lerpPoint(points[0], points[1], x);
+    const b = lerpPoint(points[0], points[1], x + notchLength);
+    const c = lerpPoint(points[3], points[2], x + notchLength);
+    const d = lerpPoint(points[3], points[2], x);
+
+    p.addPoints(a, b, c, d);
+    x += notchLength + spaceW;
     p.outline();
     p.addHatching(Math.PI / 4, 3);
     polygons.draw(toy, p);
