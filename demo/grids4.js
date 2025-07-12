@@ -202,54 +202,82 @@ const rebuild = () => {
 
     for (let i = 0; i < splits; i++) {
       const t = i / splits;
-      // const t_adjusted = lerp(0.04, 0.96, i / splits);
-      const topEdgePoint = lerpPoint(grid.points[0], grid.points[1], t);
-      const leftEdgePoint = lerpPoint(grid.points[0], grid.points[3], t);
-      let bottomEdgePoint, rightEdgePoint;
+      // const t = lerp(0.04, 0.96, i / splits);
+      const topEdgePoints = [
+        lerpPoint(grid.points[0], grid.points[1], t - edgeSizes[0]),
+        lerpPoint(grid.points[0], grid.points[1], t + edgeSizes[0]),
+      ];
+      const leftEdgePoints = [
+        lerpPoint(grid.points[0], grid.points[3], t - edgeSizes[3]),
+        lerpPoint(grid.points[0], grid.points[3], t + edgeSizes[3]),
+      ];
+      let bottomEdgePoints, rightEdgePoints;
 
       if (edgeDirection === 1) {
         // Need to switch the points for lerping the opposite edge
-        bottomEdgePoint = lerpPoint(grid.points[2], grid.points[3], t);
-        rightEdgePoint = lerpPoint(grid.points[2], grid.points[1], t);
+        bottomEdgePoints = [
+          lerpPoint(grid.points[2], grid.points[3], t - edgeSizes[2]),
+          lerpPoint(grid.points[2], grid.points[3], t + edgeSizes[2]),
+        ];
+        rightEdgePoints = [
+          lerpPoint(grid.points[2], grid.points[1], t - edgeSizes[1]),
+          lerpPoint(grid.points[2], grid.points[1], t + edgeSizes[1]),
+        ];
 
-        const notch = drawNotch(
-          topEdgePoint,
-          rightEdgePoint,
-          edgeSizes[0] * gridWFactor,
-          edgeSizes[1] * gridHFactor,
-          1
-        );
-        p1.addSegments(...notch.dp);
+        // const notch = drawNotch(
+        //   topEdgePoint,
+        //   rightEdgePoint,
+        //   edgeSizes[0] * gridWFactor,
+        //   edgeSizes[1] * gridHFactor,
+        //   1
+        // );
+
+        const p = polygons.create();
+        const ps = [
+          [topEdgePoints[0].x, topEdgePoints[0].y],
+          [topEdgePoints[1].x, topEdgePoints[1].y],
+          [rightEdgePoints[1].x, rightEdgePoints[1].y],
+          [rightEdgePoints[0].x, rightEdgePoints[0].y],
+        ];
+        console.log(ps);
+        p.addPoints(...ps);
+        p.addHatching(Math.PI / 4, 1);
+        p.outline();
+        p1.addSegments(...p.dp);
         if (i > 0) {
-          const notch = drawNotch(
-            bottomEdgePoint,
-            leftEdgePoint,
-            edgeSizes[2] * gridWFactor,
-            edgeSizes[3] * gridHFactor,
-            1
-          );
-          p1.addSegments(...notch.dp);
+          const p = polygons.create();
+          const ps = [
+            [bottomEdgePoints[0].x, bottomEdgePoints[0].y],
+            [bottomEdgePoints[1].x, bottomEdgePoints[1].y],
+            [leftEdgePoints[1].x, leftEdgePoints[1].y],
+            [leftEdgePoints[0].x, leftEdgePoints[0].y],
+          ];
+          p.addPoints(...ps);
+          p.addHatching(Math.PI / 4, 1);
+          p.outline();
+          p1.addSegments(...p.dp);
         }
       } else {
-        bottomEdgePoint = lerpPoint(grid.points[3], grid.points[2], t);
-        rightEdgePoint = lerpPoint(grid.points[1], grid.points[2], t);
+        continue;
+        // bottomEdgePoint = lerpPoint(grid.points[3], grid.points[2], t);
+        // rightEdgePoint = lerpPoint(grid.points[1], grid.points[2], t);
 
-        let notch = drawNotch(
-          topEdgePoint,
-          leftEdgePoint,
-          edgeSizes[0] * gridWFactor,
-          edgeSizes[3] * gridHFactor,
-          -1
-        );
-        p1.addSegments(...notch.dp);
-        notch = drawNotch(
-          bottomEdgePoint,
-          rightEdgePoint,
-          edgeSizes[2] * gridWFactor,
-          edgeSizes[1] * gridHFactor,
-          -1
-        );
-        p1.addSegments(...notch.dp);
+        // let notch = drawNotch(
+        //   topEdgePoint,
+        //   leftEdgePoint,
+        //   edgeSizes[0] * gridWFactor,
+        //   edgeSizes[3] * gridHFactor,
+        //   -1
+        // );
+        // p1.addSegments(...notch.dp);
+        // notch = drawNotch(
+        //   bottomEdgePoint,
+        //   rightEdgePoint,
+        //   edgeSizes[2] * gridWFactor,
+        //   edgeSizes[1] * gridHFactor,
+        //   -1
+        // );
+        // p1.addSegments(...notch.dp);
       }
     }
     p2.addPoints(
